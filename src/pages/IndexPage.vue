@@ -4,7 +4,7 @@
       <div class="q-mb-xl">
         <q-input v-model="tempData.name" label="姓名" />
         <q-input v-model="tempData.age" label="年齡" />
-        <q-btn color="primary" class="q-mt-md">新增</q-btn>
+        <q-btn @click ="addItem()" color="primary" class="q-mt-md">新增</q-btn>
       </div>
 
       <q-table
@@ -63,6 +63,7 @@
             </q-td>
           </q-tr>
         </template>
+
         <template v-slot:no-data="{ icon }">
           <div
             class="full-width row flex-center items-center text-primary q-gutter-sm"
@@ -73,6 +74,38 @@
           </div>
         </template>
       </q-table>
+     <q-dialog v-model="prompt" persistent>
+      <q-card style="min-width: 350px">
+        <q-card-section>
+          <div class="text-h6">Your address</div>
+        </q-card-section>
+
+        <q-card-section class="q-pt-none">
+          <q-input dense v-model="editedData.name" autofocus label="Name"  @keyup.enter="prompt = false" />
+          <q-input dense v-model="editedData.age" autofocus label="Age" @keyup.enter="prompt = false" />
+
+        </q-card-section>
+
+        <q-card-actions align="right" class="text-primary">
+          <q-btn flat label="Cancel" v-close-popup />
+          <q-btn flat @click="saveChanges" label="確定更改" v-close-popup />
+        </q-card-actions>
+      </q-card>
+    </q-dialog>
+
+    <!-- <q-dialog v-model="deletePrompt" persistent>
+      <q-card style="min-width: 350px">
+        <q-card-section>
+          <div class="text-h6">確定刪除?</div>
+        </q-card-section>
+
+
+        <q-card-actions align="right" class="text-primary">
+          <q-btn flat label="Cancel" v-close-popup />
+          <q-btn flat @click="deleteComform" label="確定更改" v-close-popup />
+        </q-card-actions>
+      </q-card>
+    </q-dialog> -->
     </div>
   </q-page>
 </template>
@@ -80,7 +113,7 @@
 <script setup lang="ts">
 import axios from 'axios';
 import { QTableProps } from 'quasar';
-import { ref } from 'vue';
+import { ref,onMounted } from 'vue';
 interface btnType {
   label: string;
   icon: string;
@@ -118,14 +151,65 @@ const tableButtons = ref([
     status: 'delete',
   },
 ]);
+const prompt = ref(false); 
+const deletePrompt = ref(false); 
+
+const editedData = ref({}); 
 
 const tempData = ref({
   name: '',
   age: '',
 });
-function handleClickOption(btn, data) {
-  // ...
+async function handleClickOption(btn:btnType, data) {
+
+  if (btn.status === 'edit') {
+    prompt.value =true
+    editedData.value = data
+
+  }
+  if (btn.status === 'delete') {
+
+    const response = await axios.delete(`https://dahua.metcfire.com.tw/api/CRUDTest/${data.id}`)
+    if (response.data === true) {
+       blockData.value = blockData.value.filter(item => item.id !== data.id); 
+    }
+
+  }
+
 }
+const saveChanges = async () => {
+    const postDataTemplate = {
+        id: editedData.value.id,
+        name: editedData.value.name,
+        age: editedData.value.age
+      }
+  const response = await axios.patch(`https://dahua.metcfire.com.tw/api/CRUDTest`, postDataTemplate);
+
+  prompt.value = false;
+  
+};
+async function addItem(btn:btnType,data){
+  try {
+    let postDataTemplate = {
+          id: '111',
+          name: tempData.value.name,
+          age: tempData.value.age
+        }
+    const response = await axios.post('https://dahua.metcfire.com.tw/api/CRUDTest',postDataTemplate)
+  
+    if(response.data === true) blockData.value.push(postDataTemplate)
+    
+  } catch (error) {
+    console.error('error:', error)
+  }
+  
+}
+onMounted(async () => {
+    const response =  await axios.get('https://dahua.metcfire.com.tw/api/CRUDTest/a')
+    blockData.value =response.data
+
+})
+
 </script>
 
 <style lang="scss" scoped>
