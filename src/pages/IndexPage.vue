@@ -153,40 +153,39 @@ const tableButtons = ref([
 ]);
 const prompt = ref(false); 
 const deletePrompt = ref(false); 
-
 const editedData = ref({}); 
-
 const tempData = ref({
   name: '',
   age: '',
 });
 async function handleClickOption(btn:btnType, data) {
-
   if (btn.status === 'edit') {
     prompt.value =true
     editedData.value = data
-
   }
   if (btn.status === 'delete') {
-
-    const response = await axios.delete(`https://dahua.metcfire.com.tw/api/CRUDTest/${data.id}`)
-    if (response.data === true) {
-       blockData.value = blockData.value.filter(item => item.id !== data.id); 
+    try {
+      const response = await axios.delete(`https://dahua.metcfire.com.tw/api/CRUDTest/${data.id}`)
+        if (response.data === true) {
+          blockData.value = blockData.value.filter(item => item.id !== data.id); 
+        }
+    } catch (error) {
+       console.log('error',error)
     }
-
   }
-
 }
 const saveChanges = async () => {
-    const postDataTemplate = {
+    try {
+        const postDataTemplate = {
         id: editedData.value.id,
         name: editedData.value.name,
         age: editedData.value.age
       }
-  const response = await axios.patch(`https://dahua.metcfire.com.tw/api/CRUDTest`, postDataTemplate);
-
-  prompt.value = false;
-  
+        const response = await axios.patch(`https://dahua.metcfire.com.tw/api/CRUDTest`, postDataTemplate);
+        prompt.value = false;
+    } catch (error) {
+     console.log('error',erro)
+    }
 };
 async function addItem(btn:btnType,data){
   try {
@@ -196,13 +195,10 @@ async function addItem(btn:btnType,data){
           age: tempData.value.age
         }
     const response = await axios.post('https://dahua.metcfire.com.tw/api/CRUDTest',postDataTemplate)
-  
-    if(response.data === true) blockData.value.push(postDataTemplate)
-    
+    if(response.data === true) blockData.value.push(postDataTemplate) 
   } catch (error) {
     console.error('error:', error)
-  }
-  
+  }  
 }
 onMounted(async () => {
     const response =  await axios.get('https://dahua.metcfire.com.tw/api/CRUDTest/a')
